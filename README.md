@@ -30,7 +30,7 @@ python3 gerar_azulejo.py --tile hat --size-cm 5 --sheet-cm 40 40 --output hat-40
 
 No modo `tiling`, o gerador escreve progresso em `stderr` a cada 2 segundos: peças colocadas, candidatos verificados, tamanho da fronteira, envelope atual e tempo decorrido. Ajuste a frequência com `--progress-interval`; mensagens de progresso não se misturam ao SVG.
 
-O modo `tiling` cresce um patch simplesmente conexo, sem sobreposição nem furos, e filtra 2-coronas completas pelas assinaturas da fixture [hat-2patch-hashes.txt](referencias/hat-2patch-hashes.txt), derivada de `anc/validate/2patches.txt`. É uma busca gulosa: a quantidade encontrada numa chapa é a maior obtida por essa busca, não um ótimo global provado, e a validação local não prova que toda borda incompleta possa ser estendida a uma cobertura infinita. Use `--layout array` para peças de demonstração separadas em linhas e colunas; nesse modo, `--gap-mm` e `--columns` controlam o espaçamento.
+O modo `tiling` cresce um patch simplesmente conexo, sem sobreposição nem furos, e filtra 2-coronas completas pelas assinaturas da fixture [hat-2patch-hashes.txt](referencias/hat-2patch-hashes.txt), derivada de `anc/validate/2patches.txt`. A expansão começa com um núcleo menor de 10 peças, correspondente à organização em clusters do artigo, para deixar mais espaço para a busca preencher concavidades da chapa; nessa configuração, a busca encontrou 116 peças e 69,8% de aproveitamento em uma chapa de 40 x 40 cm. É uma heurística: a quantidade encontrada numa chapa não é um ótimo global provado, e a validação local não prova que toda borda incompleta possa ser estendida a uma cobertura infinita. O artigo define os quatro metatiles `T`, `H`, `P` e `F` (com 1, 4, 2 e 2 Hats) e suas regras de substituição em [04_clusters.tex](https://arxiv.org/src/2303.10798) e [05_substitution.tex](https://arxiv.org/src/2303.10798); o gerador atual usa essas regras como base conceitual e mantém a expansão em Hats para preservar a geometria de corte. Use `--layout array` para peças de demonstração separadas em linhas e colunas; nesse modo, `--gap-mm` e `--columns` controlam o espaçamento.
 
 Tipos disponíveis (cada SVG abaixo contém 64 peças de 5 cm em uma matriz 8×8, com 5 mm entre peças):
 
@@ -48,7 +48,7 @@ Para usar outro contorno na grade axial triangular, passe um JSON com vértices 
 python3 gerar_azulejo.py --layout array --grid-json exemplos/grade-hat.json --ratio 1.4 --size-cm 5 --count 10 --columns 5
 ```
 
-O SVG usa traço vermelho fino como convenção comum de corte. Confirme cor, espessura de linha e compensação de kerf com sua máquina e software de fabricação antes de cortar.
+No modo `tiling`, as faces dos tiles aparecem preenchidas em cinza claro sob os traços vermelhos de corte. Alguns softwares de fabricação podem interpretar o preenchimento como gravação raster; confirme que a camada `tile-fills` será ignorada ou tratada separadamente, além de conferir cor, espessura de linha e compensação de kerf antes de cortar.
 
 ### Teste dos arquivos
 

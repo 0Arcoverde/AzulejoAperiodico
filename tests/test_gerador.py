@@ -41,11 +41,22 @@ class ArquivoGeradoTests(unittest.TestCase):
         cls.root = ET.parse(cls.svg_path).getroot()
         metadata_element = cls.root.find(SVG_NS + "metadata")
         cls.metadata = json.loads(metadata_element.text)
-        cls.paths = cls.root.find(SVG_NS + "g").findall(SVG_NS + "path")
+        cls.cut_group = cls.root.find(f"{SVG_NS}g[@id='cut-lines']")
+        cls.paths = cls.cut_group.findall(SVG_NS + "path")
 
     @classmethod
     def tearDownClass(cls):
         cls.temp_dir.cleanup()
+
+    def test_metatiles_expand_to_connected_nonoverlapping_hats(self):
+        expected_sizes = {"T": 1, "H": 4, "P": 2, "F": 2}
+        for kind, expected_size in expected_sizes.items():
+            with self.subTest(kind=kind):
+                transforms = gerador.metatile_transforms(kind)
+                self.assertEqual(len(transforms), expected_size)
+                cells = gerador.metatile_cells(kind)
+                self.assertEqual(len(cells), expected_size * len(gerador.HAT_KITES))
+                self.assertTrue(gerador.is_simply_connected(cells))
 
     def test_svg_contains_requested_tiles_and_metadata(self):
         self.assertEqual(self.metadata["schema"], "hat-metatile-patch-v1")
@@ -54,6 +65,15 @@ class ArquivoGeradoTests(unittest.TestCase):
         self.assertEqual(len(self.metadata["placements"]), 64)
         self.assertTrue(self.root.attrib["width"].endswith("mm"))
         self.assertTrue(self.root.attrib["height"].endswith("mm"))
+
+    def test_svg_contains_one_filled_face_per_tile_under_cut_lines(self):
+        fill_group = self.root.find(f"{SVG_NS}g[@id='tile-fills']")
+        fill_paths = fill_group.findall(SVG_NS + "path")
+        self.assertEqual(fill_group.attrib["fill"], "#e6e6e6")
+        self.assertEqual(len(fill_paths), self.metadata["count"])
+        self.assertTrue(all(path.attrib["d"].endswith(" Z") for path in fill_paths))
+        groups = self.root.findall(SVG_NS + "g")
+        self.assertLess(groups.index(fill_group), groups.index(self.cut_group))
 
     def test_tiles_do_not_overlap_and_patch_has_no_holes(self):
         occupied = set()
