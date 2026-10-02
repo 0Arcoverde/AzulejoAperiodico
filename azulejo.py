@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Gera SVGs de polykites (Hat) usando Sistema-L com subdivisão adaptativa."""
+"""Gera SVGs de polykites (Hat) usando Sistema-L com corte perfeito em chapas grandes (100x150cm)."""
 
 import argparse
 import math
@@ -231,49 +231,69 @@ def construct_metatiles(patch):
     
     return [new_H, new_T, new_P, new_F]
 
-# --- SUBDIVISÃO ADAPTATIVA ---
-def adaptive_subdivide(meta, transform, target_bbox, current_level, max_level):
-    """
-    Subdivide recursivamente apenas os tiles que intersectam a área alvo.
-    Retorna lista de (transform, HatLeaf) no nível final.
-    """
-    # CORREÇÃO: Verificar se é HatLeaf ANTES de acessar .shape
-    if isinstance(meta, HatLeaf):
-        bbox = get_bbox(HAT_OUTLINE, transform)
-        if bbox_intersects(bbox, target_bbox):
-            return [(transform, meta)]
-        return []
-    
-    # Agora é seguro acessar meta.shape (é MetaTile)
-    bbox = get_bbox(meta.shape, transform)
-    
-    # Se não intersecta a área alvo, descarta completamente
-    if not bbox_intersects(bbox, target_bbox):
-        return []
-    
-    # Se atingiu o nível máximo, expande todos os filhos
-    if current_level >= max_level:
-        hats = []
-        for T_child, node in meta.children:
-            T_global = mat_mul(transform, T_child)
-            hats.extend(adaptive_subdivide(node, T_global, target_bbox, current_level + 1, max_level))
-        return hats
-    
-    # Caso contrário, verifica cada filho recursivamente
+# --- Extração de Todos os Chapéus ---
+def get_hats(meta, current_transform=(1, 0, 0, 0, 1, 0)):
     hats = []
     for T_child, node in meta.children:
-        T_global = mat_mul(transform, T_child)
-        hats.extend(adaptive_subdivide(node, T_global, target_bbox, current_level + 1, max_level))
-    
+        T_global = mat_mul(current_transform, T_child)
+        if isinstance(node, HatLeaf):
+            hats.append((T_global, node.reflected))
+        else:
+            hats.extend(get_hats(node, T_global))
     return hats
 
 def diameter(points):
     return max(math.hypot(x1 - x2, y1 - y2) for i, (x1, y1) in enumerate(points) for x2, y2 in points[i + 1:])
 
+# --- Guilhotina Digital: Algoritmo de Cohen-Sutherland ---
+INSIDE = 0; LEFT = 1; RIGHT = 2; BOTTOM = 4; TOP = 8
+
+def compute_outcode(x, y, xmin, ymin, xmax, ymax):
+    code = INSIDE
+    if x < xmin: code |= LEFT
+    elif x > xmax: code |= RIGHT
+    if y < ymin: code |= BOTTOM
+    elif y > ymax: code |= TOP
+    return code
+
+def clip_line(x0, y0, x1, y1, xmin, ymin, xmax, ymax):
+    outcode0 = compute_outcode(x0, y0, xmin, ymin, xmax, ymax)
+    outcode1 = compute_outcode(x1, y1, xmin, ymin, xmax, ymax)
+    accept = False
+    while True:
+        if not (outcode0 | outcode1):
+            accept = True
+            break
+        elif outcode0 & outcode1:
+            break
+        else:
+            x, y = 0.0, 0.0
+            outcode_out = outcode0 if outcode0 else outcode1
+            if outcode_out & TOP:
+                x = x0 + (x1 - x0) * (ymax - y0) / (y1 - y0)
+                y = ymax
+            elif outcode_out & BOTTOM:
+                x = x0 + (x1 - x0) * (ymin - y0) / (y1 - y0)
+                y = ymin
+            elif outcode_out & RIGHT:
+                y = y0 + (y1 - y0) * (xmax - x0) / (x1 - x0)
+                x = xmax
+            elif outcode_out & LEFT:
+                y = y0 + (y1 - y0) * (xmin - x0) / (x1 - x0)
+                x = xmin
+                
+            if outcode_out == outcode0:
+                x0, y0 = x, y
+                outcode0 = compute_outcode(x0, y0, xmin, ymin, xmax, ymax)
+            else:
+                x1, y1 = x, y
+                outcode1 = compute_outcode(x1, y1, xmin, ymin, xmax, ymax)
+    return (x0, y0, x1, y1) if accept else None
+
 def parse_args():
-    parser = argparse.ArgumentParser(description="Gera SVGs via Sistema-L com subdivisão adaptativa.")
-    parser.add_argument("-o", "--output", default="azulejos_adaptativo.svg")
-    parser.add_argument("--sheet-cm", nargs=2, type=float, metavar=("L", "A"), default=[40.0, 40.0])
+    parser = argparse.ArgumentParser(description="Gera SVGs via Sistema-L para chapas grandes.")
+    parser.add_argument("-o", "--output", default="azulejos_chapa_grande.svg")
+    parser.add_argument("--sheet-cm", nargs=2, type=float, metavar=("L", "A"), default=[100.0, 150.0])
     parser.add_argument("--margin-mm", type=float, default=20.0)
     parser.add_argument("--size-cm", type=float, default=5.0)
     return parser.parse_args()
@@ -285,79 +305,102 @@ def main():
     margin = args.margin_mm
     scale_mm = args.size_cm * 10 / diameter(HAT_OUTLINE)
     
-    print("Gerando estrutura fractal (4 iterações)...")
+    # Determina dinamicamente o número de iterações com base no tamanho da chapa
+    # Para chapas grandes (100x150cm), precisamos de mais iterações
+    diag_mm = math.hypot(sheet_width, sheet_height)
+    diag_units = diag_mm / scale_mm
+    
+    # Cada iteração multiplica o tamanho por ~3.7x
+    # 4 iterações cobrem ~150 unidades, 5 iterações cobrem ~550 unidades
+    if diag_units > 150:
+        iterations = 5
+    elif diag_units > 50:
+        iterations = 4
+    else:
+        iterations = 3
+        
+    print(f"Chapa: {sheet_width:.0f} x {sheet_height:.0f} mm (diagonal: {diag_mm:.0f} mm)")
+    print(f"Escala: {scale_mm:.2f} mm/unidade, diagonal em unidades: {diag_units:.1f}")
+    print(f"Gerando malha fractal com {iterations} iterações...")
+    
     tiles = [build_H_init(), build_T_init(), build_P_init(), build_F_init()]
     patch = None
-    for i in range(4):
-        print(f"  Iteração {i+1}/4...")
+    for i in range(iterations):
+        print(f"  Processando nível {i+1}/{iterations}...")
         patch = construct_patch(*tiles)
         tiles = construct_metatiles(patch)
     
-    # Define a área alvo (em coordenadas do patch, antes da escala)
-    sheet_cx, sheet_cy = sheet_width / 2, sheet_height / 2
+    # Extrai do patch inteiro (aglomerado gigante de 29 metatiles)
+    print("Extraindo geometria completa...")
+    hats = get_hats(patch)
+    print(f"Total de peças geradas na simulação: {len(hats)}")
     
-    # Calcula bounding box aproximada do patch gigante (nível 4)
-    test_bbox = get_bbox(tiles[0].shape, (1, 0, 0, 0, 1, 0))
+    # Centraliza baseado no patch gigante
+    test_bbox = get_bbox(patch.shape, (1, 0, 0, 0, 1, 0)) if hasattr(patch, 'shape') and patch.shape else get_bbox(HAT_OUTLINE, (1, 0, 0, 0, 1, 0))
     patch_cx = (test_bbox[0] + test_bbox[2]) / 2
     patch_cy = (test_bbox[1] + test_bbox[3]) / 2
     
-    # Área alvo em coordenadas do patch
-    target_min_x = (margin - sheet_cx) / scale_mm + patch_cx
-    target_min_y = (margin - sheet_cy) / scale_mm + patch_cy
-    target_max_x = (sheet_width - margin - sheet_cx) / scale_mm + patch_cx
-    target_max_y = (sheet_height - margin - sheet_cy) / scale_mm + patch_cy
-    target_bbox = (target_min_x, target_min_y, target_max_x, target_max_y)
+    sheet_cx, sheet_cy = sheet_width / 2, sheet_height / 2
     
-    print(f"Área alvo (coordenadas do patch): x=[{target_min_x:.2f}, {target_max_x:.2f}], y=[{target_min_y:.2f}, {target_max_y:.2f}]")
-    
-    # SUBDIVISÃO ADAPTATIVA: Começa do nível 4 (supertile) e desce até o nível 0 (tile)
-    print("Aplicando subdivisão adaptativa...")
-    hats = adaptive_subdivide(tiles[0], (1, 0, 0, 0, 1, 0), target_bbox, 0, 4)
-    print(f"Total de peças após subdivisão adaptativa: {len(hats)}")
-    
-    # FILTRA PEÇAS INTEIRAS E DEPOIS DESMANCHA EM LINHAS ÚNICAS
-    unique_edges = set()
+    # Área útil da chapa (com margem)
     xmin, ymin = margin, margin
     xmax, ymax = sheet_width - margin, sheet_height - margin
+    
+    print(f"Área útil: {xmax - xmin:.0f} x {ymax - ymin:.0f} mm (margem: {margin:.0f} mm)")
+    print("Filtrando peças 100% inteiras dentro da margem...")
+    
+    unique_edges = set()
+    pieces_inside = 0
     
     for T_mat, _ in hats:
         pts = [transform_point(T_mat, p) for p in HAT_OUTLINE]
         
-        # 1. Verifica se TODOS os pontos do chapéu estão dentro da margem
+        # Transforma e verifica se todos os vértices estão dentro da margem
         scaled_pts = []
         is_inside = True
         for p in pts:
             x = (p[0] - patch_cx) * scale_mm + sheet_cx
             y = (p[1] - patch_cy) * scale_mm + sheet_cy
             
-            # Se qualquer vértice vazar a margem, a peça inteira é invalidada
+            # Se qualquer vértice vazar a margem, descarta a peça inteira
             if x < xmin or x > xmax or y < ymin or y > ymax:
                 is_inside = False
                 break
             scaled_pts.append((x, y))
             
-        # 2. Se a peça inteira couber perfeitamente, extrai suas linhas para deduplicação
+        # Se a peça inteira couber, extrai suas arestas
         if is_inside:
+            pieces_inside += 1
             for i in range(len(scaled_pts)):
                 p1 = scaled_pts[i]
                 p2 = scaled_pts[(i+1) % len(scaled_pts)]
-                
-                # Arredonda e ordena para que linhas sobrepostas sejam idênticas no Set
-                edge = tuple(sorted([(round(p1[0], 4), round(p1[1], 4)), (round(p2[0], 4), round(p2[1], 4))]))
+                # Arredonda para 4 casas decimais para deduplicação precisa
+                edge = tuple(sorted([(round(p1[0], 4), round(p1[1], 4)), 
+                                     (round(p2[0], 4), round(p2[1], 4))]))
                 unique_edges.add(edge)
-                
-    # Converte o conjunto de linhas únicas para caminhos SVG
-    valid_paths = [
-        f'  <line x1="{x1:.4f}" y1="{y1:.4f}" x2="{x2:.4f}" y2="{y2:.4f}" />'
-        for (x1, y1), (x2, y2) in unique_edges
-    ]
     
-    print(f"Linhas finais para o laser (apenas peças inteiras e sem duplicatas): {len(valid_paths)}")
+    print(f"Peças validadas (100% inteiras): {pieces_inside}")
+    print(f"Arestas únicas após deduplicação: {len(unique_edges)}")
+    
+    # Aplica guilhotina Cohen-Sutherland para corte limpo nas bordas
+    print("Aplicando guilhotina digital nas bordas...")
+    valid_paths = []
+    for (x1, y1), (x2, y2) in unique_edges:
+        # Como já filtramos peças inteiras, todas as arestas estão dentro
+        # Mas aplicamos o clip por segurança
+        clipped = clip_line(x1, y1, x2, y2, xmin, ymin, xmax, ymax)
+        if clipped:
+            cx1, cy1, cx2, cy2 = clipped
+            # Ignora resíduos menores que 0.1mm
+            if math.hypot(cx2 - cx1, cy2 - cy1) > 0.1:
+                valid_paths.append(f'  <line x1="{cx1:.4f}" y1="{cy1:.4f}" x2="{cx2:.4f}" y2="{cy2:.4f}" />')
+    
+    print(f"Linhas finais para o laser: {len(valid_paths)}")
     
     # Retângulo de margem para visualização
     margin_rect = (
-        f'  <rect x="{margin:.4f}" y="{margin:.4f}" '
-        f'width="{sheet_width - 2*margin:.4f}" height="{sheet_height - 2*margin:.4f}" '
+        f'  <rect x="{xmin:.4f}" y="{ymin:.4f}" '
+        f'width="{xmax - xmin:.4f}" height="{ymax - ymin:.4f}" '
         f'fill="none" stroke="#ff0000" stroke-width="0.2" stroke-dasharray="4,4" />'
     )
     
@@ -373,7 +416,8 @@ def main():
     ])
     
     Path(args.output).write_text(svg, encoding="utf-8")
-    print(f"SVG gerado com sucesso em: {args.output}")
+    print(f"\nSVG gerado com sucesso em: {args.output}")
+    print(f"Resumo: {pieces_inside} peças inteiras, {len(valid_paths)} linhas de corte")
 
 if __name__ == "__main__":
     main()

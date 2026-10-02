@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="200.000mm" height="200.000mm" viewBox="0 0 200.000 200.000">
+  <!-- Peças válidas: 4 -->
+  <!-- Arestas de corte únicas: 18 -->
+  <!-- Segmentos de seta únicos: 30 -->
+  <g id="cuts">
+  <line x1="88.000" y1="102.165" x2="93.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="107.000" y1="93.505" x2="109.500" y2="97.835" stroke="#000000" stroke-width="0.2" />
+  <line x1="92.000" y1="93.505" x2="107.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="87.000" y1="102.165" x2="92.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="108.000" y1="102.165" x2="113.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="93.000" y1="93.505" x2="100.500" y2="106.495" stroke="#000000" stroke-width="0.2" />
+  <line x1="87.000" y1="102.165" x2="107.000" y2="102.165" stroke="#000000" stroke-width="0.2" />
+  <line x1="88.000" y1="93.505" x2="98.000" y2="110.825" stroke="#000000" stroke-width="0.2" />
+  <line x1="107.000" y1="102.165" x2="109.500" y2="97.835" stroke="#000000" stroke-width="0.2" />
+  <line x1="88.000" y1="93.505" x2="90.500" y2="89.175" stroke="#000000" stroke-width="0.2" />
+  <line x1="100.500" y1="106.495" x2="108.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="110.500" y1="89.175" x2="113.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="93.000" y1="93.505" x2="113.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="90.500" y1="89.175" x2="110.500" y2="89.175" stroke="#000000" stroke-width="0.2" />
+  <line x1="88.000" y1="102.165" x2="108.000" y2="102.165" stroke="#000000" stroke-width="0.2" />
+  <line x1="93.000" y1="93.505" x2="108.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="103.000" y1="110.825" x2="113.000" y2="93.505" stroke="#000000" stroke-width="0.2" />
+  <line x1="98.000" y1="110.825" x2="103.000" y2="110.825" stroke="#000000" stroke-width="0.2" />
+  </g>
+  <g id="arrows">
+  <line x1="100.800" y1="95.590" x2="100.800" y2="98.340" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="99.800" y1="98.440" x2="99.980" y2="98.550" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.570" y1="95.710" x2="101.000" y2="95.960" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.000" y1="95.590" x2="100.500" y2="93.340" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.320" y1="98.740" x2="101.700" y2="96.360" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.410" y1="98.340" x2="100.800" y2="98.340" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="101.000" y1="95.590" x2="101.500" y2="95.590" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.000" y1="96.030" x2="100.500" y2="93.780" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.500" y1="93.340" x2="101.000" y2="95.590" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="101.870" y1="96.460" x2="102.560" y2="94.260" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="99.500" y1="95.590" x2="100.000" y2="95.590" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.200" y1="96.030" x2="100.200" y2="98.780" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="99.980" y1="98.550" x2="100.320" y2="98.740" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.800" y1="96.030" x2="101.500" y2="96.030" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="101.870" y1="96.460" x2="102.300" y2="96.710" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="101.000" y1="95.960" x2="102.560" y2="94.260" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="99.500" y1="96.030" x2="100.000" y2="96.030" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="99.500" y1="95.590" x2="100.200" y2="95.590" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="101.700" y1="96.360" x2="102.300" y2="96.710" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.200" y1="95.590" x2="100.200" y2="98.340" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.200" y1="98.340" x2="100.410" y2="98.340" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.570" y1="95.710" x2="101.180" y2="96.060" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.800" y1="95.590" x2="101.500" y2="95.590" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="99.500" y1="96.030" x2="100.200" y2="96.030" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.500" y1="93.780" x2="101.000" y2="96.030" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="101.000" y1="96.030" x2="101.500" y2="96.030" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="99.800" y1="98.440" x2="101.180" y2="96.060" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.200" y1="98.780" x2="100.410" y2="98.780" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.800" y1="96.030" x2="100.800" y2="98.780" stroke="#0000ff" stroke-width="0.15" />
+  <line x1="100.410" y1="98.780" x2="100.800" y2="98.780" stroke="#0000ff" stroke-width="0.15" />
+  </g>
+  <rect x="10.0" y="10.0" width="180.0" height="180.0" fill="none" stroke="#ff0000" stroke-width="0.3" stroke-dasharray="5,5" />
+</svg>
